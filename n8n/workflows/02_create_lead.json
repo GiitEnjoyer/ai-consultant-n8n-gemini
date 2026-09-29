@@ -1,0 +1,342 @@
+{
+  "id": "KvartaCreateLead",
+  "name": "Кварта · Создание заявки",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "name": "request",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "source",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "fd29426d-a36a-5bdb-92ed-8a59138f08e6",
+      "name": "Вызов из агента",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Нормализация заявки: телефон в формат +7XXXXXXXXXX, очистка имени, номер заявки.\nconst lead = $input.first().json;\nconst digits = String(lead.phone ?? '').replace(/\\D/g, '');\nlet phone = null;\nif (digits.length === 11 && ['7', '8'].includes(digits[0])) phone = '+7' + digits.slice(1);\nelse if (digits.length === 10 && digits[0] === '9') phone = '+7' + digits;\n\nconst name = String(lead.name ?? '').replace(/\\s+/g, ' ').trim().slice(0, 80);\nconst request = String(lead.request ?? '').replace(/\\s+/g, ' ').trim().slice(0, 1000);\n\nconst errors = [];\nif (!phone) errors.push('Телефон должен быть российским номером из 10–11 цифр');\nif (name.length < 2) errors.push('Не указано имя');\n\nconst now = DateTime.now().setZone('Europe/Moscow');\n// Номер заявки = дата + ID запуска n8n: уникален и позволяет найти запуск в истории.\nconst leadId = 'L-' + now.toFormat('yyMMdd') + '-' + $execution.id;\n\nconst esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst telegramText = [\n  '🆕 <b>Новая заявка с сайта</b> ' + leadId,\n  '👤 ' + esc(name),\n  '📞 ' + esc(phone ?? ''),\n  '📝 ' + esc(request || '—'),\n  '🕒 ' + now.toFormat('dd.MM.yyyy HH:mm') + ' (МСК)',\n].join('\\n');\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    leadId,\n    createdAt: now.toFormat('yyyy-MM-dd HH:mm:ss'),\n    name,\n    phone,\n    request,\n    sessionId: String(lead.sessionId ?? ''),\n    source: String(lead.source || 'site-chat'),\n    telegramText,\n  },\n}];"
+      },
+      "id": "0e024d35-256e-565a-996a-8cdd2d01832b",
+      "name": "Нормализация заявки",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "706d9c27-a001-59b7-bc7b-b542c2e3c15e",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d39cbb41-b3f3-53d2-ac7a-cff45cd8dbdb",
+      "name": "Данные корректны?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Дата": "={{ $json.createdAt }}",
+            "Номер заявки": "={{ $json.leadId }}",
+            "Имя": "={{ $json.name }}",
+            "Телефон": "={{ $json.phone }}",
+            "Запрос": "={{ $json.request }}",
+            "Источник": "={{ $json.source }}",
+            "Сессия": "={{ $json.sessionId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Дата",
+              "displayName": "Дата",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Номер заявки",
+              "displayName": "Номер заявки",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Имя",
+              "displayName": "Имя",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Телефон",
+              "displayName": "Телефон",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Запрос",
+              "displayName": "Запрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Источник",
+              "displayName": "Источник",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Сессия",
+              "displayName": "Сессия",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c8fb8dd6-1a50-5d71-a143-6845b82ebf18",
+      "name": "Запись в Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        680,
+        200
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "credGSheetsKvrta",
+          "name": "Google Sheets (service account)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_MANAGER_CHAT_ID }}",
+        "text": "={{ $('Нормализация заявки').first().json.telegramText }}{{ $json.error ? '\\n⚠️ Заявка не записана в таблицу: ' + ($json.error.message ?? $json.error) : '' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "20225430-5328-53a9-8305-ba3d9f3060a0",
+      "name": "Уведомление менеджеру",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "credTelegramKvrt",
+          "name": "Telegram bot (manager alerts)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Итог для агента. Заявка считается принятой, если сохранена хотя бы в одном канале.\nconst lead = $('Нормализация заявки').first().json;\nconst savedToSheet = !$('Запись в Google Sheets').first().json.error;\nconst managerNotified = !$input.first().json.error;\n\nif (!savedToSheet && !managerNotified) {\n  return [{ json: {\n    status: 'error',\n    message: 'Техническая ошибка: заявка не сохранена. Предложите посетителю позвонить по телефону +7 (800) 000-00-00.',\n  } }];\n}\nreturn [{ json: {\n  status: 'ok',\n  leadId: lead.leadId,\n  savedToSheet,\n  managerNotified,\n  message: 'Заявка создана, менеджер свяжется с посетителем в рабочее время.',\n} }];"
+      },
+      "id": "ac4192b3-0f3d-50a5-b697-d6dc1bc95883",
+      "name": "Результат: заявка создана",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Агент получает понятную причину и просит посетителя уточнить данные.\nreturn [{ json: { status: 'error', message: $input.first().json.errors.join('; ') } }];"
+      },
+      "id": "ac6a1ea0-00ea-536c-9365-58033cece30b",
+      "name": "Результат: ошибка данных",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Вызов из агента": {
+      "main": [
+        [
+          {
+            "node": "Нормализация заявки",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Нормализация заявки": {
+      "main": [
+        [
+          {
+            "node": "Данные корректны?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Данные корректны?": {
+      "main": [
+        [
+          {
+            "node": "Запись в Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Результат: ошибка данных",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запись в Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Уведомление менеджеру",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Уведомление менеджеру": {
+      "main": [
+        [
+          {
+            "node": "Результат: заявка создана",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KvartaErrorAlert",
+    "timezone": "Europe/Moscow",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

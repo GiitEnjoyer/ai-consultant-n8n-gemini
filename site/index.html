@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>«Кварта» — ремонт квартир (демо-сайт)</title>
+  <style>
+    body{margin:0;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1b1f24;background:#fff}
+    header{background:#0d1b2a;color:#fff;padding:64px 24px}
+    .wrap{max-width:960px;margin:0 auto;padding:0 16px}
+    h1{font-size:40px;margin:0 0 12px}
+    .demo{display:inline-block;background:#ffd166;color:#0d1b2a;font-size:13px;font-weight:600;padding:2px 10px;border-radius:10px;margin-bottom:16px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:40px 0}
+    .card{border:1px solid #e3e6ea;border-radius:12px;padding:20px}
+    .card b{display:block;font-size:18px}.card span{color:#1f6feb;font-weight:600}
+    footer{color:#6a737d;font-size:14px;padding:24px 0 80px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="demo">Демонстрационный сайт вымышленной компании</div>
+      <h1>Ремонт квартир под ключ в Санкт-Петербурге</h1>
+      <p>Фиксированная смета, гарантия 3 года, ежедневный фотоотчёт. Задайте вопрос онлайн-консультанту в правом нижнем углу.</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="cards">
+      <div class="card"><b>Косметический</b><span>от 4 500 ₽/м²</span><p>3–5 недель</p></div>
+      <div class="card"><b>Капитальный</b><span>от 9 000 ₽/м²</span><p>2,5–4 месяца</p></div>
+      <div class="card"><b>Дизайнерский</b><span>от 14 000 ₽/м²</span><p>4–6 месяцев</p></div>
+      <div class="card"><b>Санузел под ключ</b><span>от 180 000 ₽</span><p>2–3 недели</p></div>
+    </div>
+  </main>
+  <footer class="wrap">Проект-демонстрация: n8n + Gemini + Python. Компания «Кварта» и все контактные данные вымышлены.</footer>
+
+  <script src="/widget/chat-widget.js"
+          data-endpoint="/api/chat"
+          data-title="Консультант «Кварта»"
+          data-greeting="Здравствуйте! Я онлайн-консультант компании «Кварта». Подскажу цены и сроки ремонта, а если нужно — запишу на бесплатный замер."
+          data-quick="Сколько стоит капитальный ремонт?|Какая гарантия?|Хочу вызвать замерщика"
+          defer></script>
+</body>
+</html>

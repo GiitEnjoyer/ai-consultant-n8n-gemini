@@ -1,0 +1,12 @@
+.env
+secrets/*
+!secrets/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+node_modules/
+.DS_Store
+.idea/
+.vscode/
+package-lock.json

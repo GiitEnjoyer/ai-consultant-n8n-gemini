@@ -1,0 +1,11 @@
+{
+  "name": "kvarta-n8n-workflows",
+  "private": true,
+  "description": "Тесты кода узлов Code рабочих процессов n8n",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "luxon": "^3.7.2"
+  }
+}
